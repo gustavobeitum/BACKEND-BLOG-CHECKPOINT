@@ -15,7 +15,14 @@ class CreateParagraphsTable extends Migration
     {
         Schema::create('paragraphs', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('post_id');
+            $table->string('title', 90);
+            $table->string('subtitle', 100);
+            $table->string('paragraph', 255);
             $table->timestamps();
+
+            //foreign key constraint
+            $table->foreign('post_id')->references('id')->on('posts');
         });
     }
 
