@@ -10,4 +10,8 @@ class Photo extends Model
     use HasFactory;
 
     protected $fillable = ['paragraph_id', 'photo'];
+
+    public function paragraph(){
+        return $this->belongsTo(Paragraph::class);
+    }
 }
