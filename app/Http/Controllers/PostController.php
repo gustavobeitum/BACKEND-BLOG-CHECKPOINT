@@ -14,17 +14,8 @@ class PostController extends Controller
      */
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        $posts = Post::all();
+        return response()->json($posts);
     }
 
     /**
@@ -35,7 +26,19 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'user_id' => ['exists:users,id'],
+            'title' => ['required', 'min:10'],
+            'type' => ['required']
+        ]);
+
+        $post = Post::create([
+            'user_id' => $request->user_id,
+            'title' => $request->title,
+            'type' => $request->type,
+        ]);
+
+        return response()->json($post);
     }
 
     /**
@@ -44,20 +47,13 @@ class PostController extends Controller
      * @param  \App\Models\Post  $post
      * @return \Illuminate\Http\Response
      */
-    public function show(Post $post)
+    public function show($id)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Post  $post
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Post $post)
-    {
-        //
+        $post = Post::find($id);
+        if (!$post) {
+            return response()->json(['messagem' => 'Postagem não encontrada'], 404);
+        }
+        return response()->json($post);
     }
 
     /**
@@ -67,9 +63,27 @@ class PostController extends Controller
      * @param  \App\Models\Post  $post
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Post $post)
+    public function update(Request $request, $id)
     {
-        //
+        $post = Post::find($id);
+        $request->validate([
+            'user_id' => ['exists:users,id'],
+            'title' => ['min:10'],
+            'type' => ['']
+        ]);
+
+        if ($post ===  null) {
+            return response()->json(['Erro' => 'Impossível realizar a atualização, postagem não encontrada'], 404);
+        }
+
+        $post->update([
+            'user_id' => $request->user_id ?: $post->user_id,
+            'title' => $request->title ?: $post->title,
+            'type' => $request->type ?: $post->type,
+        ]);
+        $post->save();
+
+        return response()->json($post);
     }
 
     /**
@@ -78,8 +92,13 @@ class PostController extends Controller
      * @param  \App\Models\Post  $post
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Post $post)
+    public function destroy($id)
     {
-        //
+        $post = Post::find($id);
+        if ($post === null) {
+            return response()->json(['Erro' => 'Impossível deletar, postagem não encontrada'], 404);
+        }
+        $post->delete();
+        return response()->json(['messagem' => 'Postagem deletada com sucesso']);
     }
 }
