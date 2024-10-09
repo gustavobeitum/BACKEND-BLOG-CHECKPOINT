@@ -16,7 +16,7 @@ class CreatePostsTable extends Migration
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->string('publication', 255);
+            $table->string('title', 60);
             $table->enum('type',['news', 'review', 'trailer']);
             $table->timestamps();
             
