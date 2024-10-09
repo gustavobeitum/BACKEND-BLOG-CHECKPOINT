@@ -30,4 +30,3 @@ Route::apiResource('/post', PostController::class);
 Route::apiResource('/comment', CommentController::class);
 Route::apiResource('/answer', AnswerController::class);
 Route::apiResource('/paragraph', ParagraphController::class);
-Route::apiResource('/photo', PhotoController::class);
