@@ -15,7 +15,6 @@ class UserController extends Controller
      */
     public function index()
     {
-        // Retrieve all users
         $users = User::all();
         return response()->json($users);
     }
@@ -28,21 +27,20 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate the incoming request
         $request->validate([
             'name' =>['required','string','max:255', 'unique:users'],
             'email' =>['required','string','email','max:255','unique:users'],
             'password' => ['string','min:8'],
-            'is_admin' => ['required']
+            'is_admin' => ['required', 'in:admin,normal']
         ]);
-
-        // Create a new user with the validated data
+        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password? bcrypt($request->password) : null,
             'is_admin' => $request->is_admin,
         ]);
+        
         return response()->json($user);
     }
 
@@ -54,7 +52,6 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        // Retrieve the user with the given ID
         $user = User::find($id);
         if (!$user) {
             return response()->json(['messagem' => 'Usuário não encontrado'], 404);
