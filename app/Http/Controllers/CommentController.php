@@ -14,17 +14,8 @@ class CommentController extends Controller
      */
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        $comments = Comment::all();
+        return response()->json($comments, 200);
     }
 
     /**
@@ -35,7 +26,19 @@ class CommentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'user_id' => ['exists:users,id'],
+            'post_id' => ['exists:posts,id'],
+            'comment' => ['min:3']
+        ]);
+        
+        $comment = Comment::create([
+            'user_id' => $request->user_id,/*()->*/
+            'post_id' => $request->post_id,
+            'comment' => $request->comment
+        ]);
+
+        return response()->json($comment, 201);
     }
 
     /**
@@ -44,20 +47,13 @@ class CommentController extends Controller
      * @param  \App\Models\Comment  $comment
      * @return \Illuminate\Http\Response
      */
-    public function show(Comment $comment)
+    public function show($id)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Comment  $comment
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Comment $comment)
-    {
-        //
+        $comment = Comment::find($id);
+        if (!$comment) {
+            return response()->json(['messagem' => 'Comentario não encontrado'], 404);
+        }
+        return response()->json($comment, 200);
     }
 
     /**
@@ -69,7 +65,14 @@ class CommentController extends Controller
      */
     public function update(Request $request, Comment $comment)
     {
-        //
+        $request->validate([
+            'comment' => ['min:3']
+        ]);
+
+        $comment->comment = $request->comment;
+        $comment->save();
+
+        return response()->json($comment, 200);
     }
 
     /**
@@ -78,8 +81,14 @@ class CommentController extends Controller
      * @param  \App\Models\Comment  $comment
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Comment $comment)
-    {
-        //
+    public function destroy($id)
+    {   
+        $comment = Comment::find($id);
+        if ($comment === null) {
+            return response()->json(['Erro' => 'Impossível deletar, comentário não encontrado'], 404);
+        }
+        
+        $comment->delete();
+        return response()->json(['messagem' => 'Comentário deletado com sucesso']);
     }
 }
