@@ -67,9 +67,7 @@ class PostController extends Controller
     {
         $post = Post::find($id);
         $request->validate([
-            'user_id' => ['exists:users,id'],
-            'title' => ['min:10'],
-            'type' => ['']
+            'user_id' => ['exists:users,id']
         ]);
 
         if ($post ===  null) {
@@ -94,7 +92,7 @@ class PostController extends Controller
      */
     public function destroy($id)
     {
-        $post = Post::find($id);
+        $post = Post::with('comments.answers')->find($id);
         if ($post === null) {
             return response()->json(['Erro' => 'Impossível deletar, postagem não encontrada'], 404);
         }
