@@ -72,7 +72,7 @@ class UserController extends Controller
         $request->validate([
             'name' =>['string','max:255', Rule::unique('users')->ignore($user->id)],
             'email' =>['string','email','max:255',Rule::unique('users')->ignore($user->id)],
-            'is_admin' => ['required']
+            'is_admin' => ['in:admin,normal']
         ]);
 
         if ($user ===  null) {
@@ -102,6 +102,7 @@ class UserController extends Controller
         if ($user === null) {
             return response()->json(['Erro' => 'Impossível deletar, usuário não encontrado'], 404);
         }
+        $user->posts()->delete();
         $user->delete();
         return response()->json(['messagem' => 'Usuário deletado com sucesso']);
     }
