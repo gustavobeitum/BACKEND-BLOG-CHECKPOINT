@@ -70,6 +70,9 @@ class AnswerController extends Controller
         $request->validate([
             'response' => ['string'],
         ]);
+        if ($answer ===  null) {
+            return response()->json(['Erro' => 'Impossível realizar a atualização, postagem não encontrada'], 404);
+        }
 
         $answer->response = $request->response;
         $answer->save();
