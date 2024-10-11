@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -16,7 +19,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::all();
-        return response()->json($users);
+        return response()->json(['data' => $users], Response::HTTP_OK);
     }
 
     /**
@@ -28,20 +31,35 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' =>['required','string','max:255', 'unique:users'],
-            'email' =>['required','string','email','max:255','unique:users'],
-            'password' => ['string','min:8'],
+            'name' => ['required', 'string', 'max:40'],
+            'last_name' => ['required', 'string', 'max:30'],
+            'username' => ['required', 'string', 'max:50', 'unique:users'],
+            'image' => ['required', 'file', 'image'],
+            'birthday' => ['required', 'date'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
             'is_admin' => ['required', 'in:admin,normal']
         ]);
-        
+
+        if ($request->hasFile('image')) {
+            $images = $request->file('image');
+            $images_url = $images->store('images', 'public');
+        } else {
+            $images_url = null;
+        }
+
         $user = User::create([
             'name' => $request->name,
+            'last_name' => $request->last_name,
+            'username' => $request->username,
+            'image' => $images_url,
+            'birthday' => $request->birthday,
             'email' => $request->email,
-            'password' => $request->password? bcrypt($request->password) : null,
+            'password' => bcrypt($request->password),
             'is_admin' => $request->is_admin,
         ]);
-        
-        return response()->json($user);
+
+        return response()->json(['data' => $user], Response::HTTP_CREATED);
     }
 
     /**
@@ -52,11 +70,12 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::find($id);
-        if (!$user) {
-            return response()->json(['messagem' => 'Usuário não encontrado'], 404);
+        try {
+            $user = User::findOrFail($id);
+            return response()->json(['data' => $user], Response::HTTP_OK);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Usuário não encontrado'], Response::HTTP_NOT_FOUND);
         }
-        return response()->json($user);
     }
 
     /**
@@ -67,27 +86,37 @@ class UserController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
-    {   
+    {
         $user = User::find($id);
         $request->validate([
-            'name' =>['string','max:255', Rule::unique('users')->ignore($user->id)],
-            'email' =>['string','email','max:255',Rule::unique('users')->ignore($user->id)],
+            'username' => ['string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'image' => ['file', 'image'],
+            'email' => ['string', 'email', 'max:90', Rule::unique('users')->ignore($user->id)],
             'is_admin' => ['in:admin,normal']
         ]);
 
-        if ($user ===  null) {
-            return response()->json(['Erro' => 'Impossível realizar a atualização, usuário não encontrado'], 404);
+        if (!$user) {
+            return response()->json(['messagem' => 'Impossível realizar atualização, usuário não encontrado'], Response::HTTP_NO_CONTENT);
         }
-        
-        $user ->update([
-            'name' => $request->name ?: $user->name,
+
+        if ($request->hasFile('image')) {
+            if ($user->image) {
+                Storage::disk('public')->delete($user->image);
+            }
+            $image = $request->file('image');
+            $image_url = $image->store('images', 'public');
+        } else {
+            $image_url = $user->image;
+        }
+
+        $user->update([
+            'username' => $request->username ?: $user->username,
+            'image' => $image_url,
             'email' => $request->email ?: $user->email,
             'is_admin' => $request->is_admin ?: $user->is_admin
         ]);
 
-        $user->save();
         return response()->json($user);
-
     }
 
     /**
@@ -100,10 +129,19 @@ class UserController extends Controller
     {
         $user = User::find($id);
         if ($user === null) {
-            return response()->json(['Erro' => 'Impossível deletar, usuário não encontrado'], 404);
+            return response()->json(['messagem' => 'Impossível deletar, usuário não encontrado'], 404);
         }
+        if ($user->image) {
+            Storage::disk('public')->delete($user->image);
+        }
+
         $user->posts()->delete();
-        $user->delete();
-        return response()->json(['messagem' => 'Usuário deletado com sucesso']);
+        $deleted = $user->delete();
+
+        if ($deleted) {
+            return response()->json(['messagem' => 'Usuário deletado com sucesso']);
+        } else {
+            return response()->json(['messagem' => 'Erro ao deletar o usuário'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }
