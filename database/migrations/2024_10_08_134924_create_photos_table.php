@@ -16,7 +16,7 @@ class CreatePhotosTable extends Migration
         Schema::create('photos', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('paragraph_id');
-            $table->binary('photo');
+            $table->binary('photo')->nullable();
             $table->timestamps();
 
             //foreign key constraint
