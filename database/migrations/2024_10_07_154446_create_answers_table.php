@@ -21,7 +21,7 @@ class CreateAnswersTable extends Migration
             $table->timestamps();
 
             //foreign key constraints
-            $table->foreign('comment_id')->references('id')->on('comments');
+            $table->foreign('comment_id')->references('id')->on('comments')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users');
         });
     }
