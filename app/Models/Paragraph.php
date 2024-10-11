@@ -9,5 +9,9 @@ class Paragraph extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['post_id', 'title', 'subtitle', 'paragraph'];
+    protected $fillable = ['post_id', 'title', 'subtitle', 'content'];
+
+    public function photos(){
+        return $this->hasMany(Photo::class);
+    }
 }
