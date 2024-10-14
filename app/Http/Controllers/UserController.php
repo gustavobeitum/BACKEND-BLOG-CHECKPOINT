@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
@@ -33,7 +32,7 @@ class UserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:40'],
             'last_name' => ['required', 'string', 'max:30'],
-            'username' => ['required', 'string', 'max:50', 'unique:users'],
+            'username' => ['required', 'string', 'max:25', 'unique:users'],
             'image' => ['required', 'file', 'image'],
             'birthday' => ['required', 'date'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -88,7 +87,7 @@ class UserController extends Controller
     {
         $user = User::find($id);
         $request->validate([
-            'username' => ['string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'username' => ['string', 'max:25', Rule::unique('users')->ignore($user->id)],
             'image' => ['file', 'image'],
             'email' => ['string', 'email', 'max:90', Rule::unique('users')->ignore($user->id)],
             'is_admin' => ['in:admin,normal']
@@ -133,7 +132,8 @@ class UserController extends Controller
         if ($user->image) {
             Storage::disk('public')->delete($user->image);
         }
-
+        $user->comments()->delete();
+        $user->answers()->delete();
         $user->posts()->delete();
         $deleted = $user->delete();
 
