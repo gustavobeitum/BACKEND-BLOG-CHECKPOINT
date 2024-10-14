@@ -18,6 +18,8 @@ class CreatePostsTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->string('title', 60);
             $table->enum('type',['news', 'review', 'trailer']);
+            $table->string('image');
+            $table->string('description');
             $table->timestamps();
             
             //foreign key constraint
