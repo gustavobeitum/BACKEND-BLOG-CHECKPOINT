@@ -16,11 +16,11 @@ class CreatePhotosTable extends Migration
         Schema::create('photos', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('paragraph_id');
-            $table->binary('photo')->nullable();
+            $table->string('photo')->nullable();
             $table->timestamps();
 
             //foreign key constraint
-            $table->foreign('paragraph_id')->references('id')->on('paragraphs');
+            $table->foreign('paragraph_id')->references('id')->on('paragraphs')->onDelete('cascade');
         });
     }
 

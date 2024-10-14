@@ -12,6 +12,6 @@ class Photo extends Model
     protected $fillable = ['paragraph_id', 'photo'];
 
     public function paragraph(){
-        return $this->belongsTo(Paragraph::class);
+        return $this->belongsTo(Paragraph::class, 'paragraph_id');
     }
 }

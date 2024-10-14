@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Paragraph;
 use App\Models\Photo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 class ParagraphController extends Controller
 {
@@ -15,9 +17,8 @@ class ParagraphController extends Controller
      */
     public function index()
     {
-        $paragraphs = Paragraph::all();
-        $photo = Photo::all();
-        return response()->json([$paragraphs, $photo]);
+        $paragraphs = Paragraph::with('photos')->get();
+        return response()->json(['data' => $paragraphs], Response::HTTP_OK);
     }
 
     /**
@@ -28,31 +29,31 @@ class ParagraphController extends Controller
      */
     public function store(Request $request)
     {
-
         $request->validate([
             'post_id' => ['exists:posts,id'],
             'paragraph_id' => ['exists:paragraph,id'],
-            'photo' => ['image']
+            'photo' => ['array'],
+            'photo.*' => ['file', 'image']
         ]);
 
-
-        if ($request->photo) {
-            $paragraph = Paragraph::create([
-                'post_id' => $request->post_id
-            ]);
-            $photo = Photo::create([
-                'paragraph_id' => $paragraph->id,
-                'photo' => $request->file('photo')->store('public/photos')
-            ]);
-            return response()->json([$paragraph, $photo]);
-        }
         $paragraph = Paragraph::create([
             'post_id' => $request->post_id,
             'subtitle' => $request->subtitle,
             'content' => $request->text
         ]);
-        $paragraph->save();
-        return response()->json($paragraph);
+
+
+        if ($request->hasFile('photo')) {
+            foreach ($request->file('photo') as $photo) {
+                $image_url = $photo->store('photos', 'public');
+                Photo::create([
+                    'paragraph_id' => $paragraph->id,
+                    'photo' => $image_url
+                ]);
+            }
+        }
+
+        return response()->json(['data' => $paragraph->load('photos')], Response::HTTP_CREATED);
     }
 
     /**
@@ -65,9 +66,10 @@ class ParagraphController extends Controller
     {
         $paragraph = Paragraph::with('photos:paragraph_id,photo')->find($id);
         if (!$paragraph) {
-            return response()->json(['messagem' => 'Parágrafo não encontrado'], 404);
+            return response()->json(['messagem' => 'Parágrafo não encontrado'], Response::HTTP_NO_CONTENT);
         }
-        return response()->json($paragraph);
+
+        return response()->json(['data' => $paragraph], Response::HTTP_OK);
     }
 
     /**
@@ -78,18 +80,17 @@ class ParagraphController extends Controller
      */
     public function update(Request $request, $id)
     {
-        dd([
-            'photo' =>$request->file('photo'),
-            'subtitle' =>$request->input('subtitle'),
-        ]);
         $request->validate([
             'paragraph_id' => ['exists:paragraphs,id'],
-            'photo' => ['image', 'required'],
+            'post_id' => ['exists:posts,id'],
+            'photo' => ['sometimes', 'array'],
+            'photo.*' => ['file', 'image']
         ]);
+
         $paragraph = Paragraph::find($id);
 
         if (!$paragraph) {
-            return response()->json(['Erro' => 'Impossível realizar a atualização, postagem não encontrada'], 404);
+            return response()->json(['Erro' => 'Impossível realizar a atualização, postagem não encontrada'], Response::HTTP_NO_CONTENT);
         }
 
         $paragraph->update([
@@ -97,7 +98,23 @@ class ParagraphController extends Controller
             'content' => $request->text ?: $paragraph->content
 
         ]);
-        return response()->json($paragraph);
+
+        if ($request->hasFile('photo')) {
+            foreach ($paragraph->photos as $photo) {
+                Storage::disk('public')->delete($photo->photo);
+                $photo->delete();
+            }
+            foreach ($request->file('photo') as $newPhoto) {
+                $image_url = $newPhoto->store('photos', 'public');
+                
+                Photo::create([
+                    'paragraph_id' => $paragraph->id,
+                    'photo' => $image_url
+                ]);
+            }
+        }
+
+        return response()->json(['data' => $paragraph->load('photos')], Response::HTTP_OK);
     }
 
     /**
@@ -110,12 +127,15 @@ class ParagraphController extends Controller
     {
         $paragraph = Paragraph::find($id);
         if (!$paragraph) {
-            return response()->json(['error' => 'Paragraph not found'], 404);
+            return response()->json(['Erro' => 'Paragrafo não encontrado'], Response::HTTP_NO_CONTENT);
+        }
+        foreach($paragraph->photos as $photo){
+            Storage::disk('public')->delete($photo->photo);
+            $photo->delete();
         }
 
-        $paragraph->photos()->delete();
-
         $paragraph->delete();
+
         return response()->json(['messagem' => 'Parágrafo deletado com sucesso']);
     }
 }
