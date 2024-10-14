@@ -17,7 +17,7 @@ class AnswerController extends Controller
     {
         $answers = Answer::all();
 
-        return response()->json($answers, 200);
+        return response()->json(['data' => $answers], Response::HTTP_OK);
     }
 
     /**
@@ -31,7 +31,7 @@ class AnswerController extends Controller
         $request->validate([
             'user_id' => ['exists:users,id', 'integer'],
             'comment_id' => ['exists:comments,id', 'integer'],
-            'response' => ['string'],
+            'response' => ['max:100'],
         ]);
         $answer = Answer::create([
             'user_id' => $request->user_id,
@@ -39,7 +39,7 @@ class AnswerController extends Controller
             'response' => $request->response,
         ]);
 
-        return response()->json($answer, 201);
+        return response()->json(['data' => $answer],Response::HTTP_CREATED);
     }
 
     /**
@@ -50,12 +50,12 @@ class AnswerController extends Controller
      */
     public function show($id)
     {
-        $answer = Answer::with('comment:id,user_id,post_id,comment,created_at')->select('id','comment_id','user_id','response')->find($id);
+        $answer = Answer::find($id);
             if (!$answer){
                 return response()->json(['messagem' => 'Resposta não encontrada'], Response::HTTP_NO_CONTENT);
             }
 
-        return response()->json($answer, Response::HTTP_OK);
+        return response()->json(['data' => $answer], Response::HTTP_OK);
     }
 
     /**
@@ -68,16 +68,16 @@ class AnswerController extends Controller
     public function update(Request $request, Answer $answer)
     {
         $request->validate([
-            'response' => ['string'],
+            'response' => ['max:100'],
         ]);
-        if ($answer ===  null) {
-            return response()->json(['Erro' => 'Impossível realizar a atualização, postagem não encontrada'], 404);
+        if (!$answer) {
+            return response()->json(['Erro' => 'Impossível realizar a atualização, postagem não encontrada'], Response::HTTP_NO_CONTENT);
         }
 
         $answer->response = $request->response;
         $answer->save();
 
-        return response()->json($answer, 200);
+        return response()->json(['data' => $answer], Response::HTTP_OK);
     }
 
     /**
@@ -89,8 +89,8 @@ class AnswerController extends Controller
     public function destroy($id)
     {
         $answer = Answer::find($id);
-        if($answer === null){
-            return response()->json(['messagem' => 'Resposta não encontrada'], 404);
+        if(!$answer){
+            return response()->json(['messagem' => 'Resposta não encontrada'], Response::HTTP_NO_CONTENT);
         }
         $answer->delete();
 

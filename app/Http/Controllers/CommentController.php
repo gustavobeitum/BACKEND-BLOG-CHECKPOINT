@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CommentController extends Controller
 {
@@ -15,7 +16,7 @@ class CommentController extends Controller
     public function index()
     {
         $comments = Comment::all();
-        return response()->json($comments, 200);
+        return response()->json(['data' => $comments], Response::HTTP_OK);
     }
 
     /**
@@ -29,16 +30,16 @@ class CommentController extends Controller
         $request->validate([
             'user_id' => ['exists:users,id'],
             'post_id' => ['exists:posts,id'],
-            'comment' => ['min:3']
+            'comment' => ['max:100']
         ]);
         
         $comment = Comment::create([
-            'user_id' => $request->user_id,/*()->*/
+            'user_id' => $request->user_id,
             'post_id' => $request->post_id,
             'comment' => $request->comment
         ]);
 
-        return response()->json($comment, 201);
+        return response()->json(['data' => $comment], Response::HTTP_CREATED);
     }
 
     /**
@@ -49,11 +50,11 @@ class CommentController extends Controller
      */
     public function show($id)
     {
-        $comment = Comment::find($id);
+        $comment = Comment::with('answers')->find($id);
         if (!$comment) {
-            return response()->json(['messagem' => 'Comentario não encontrado'], 404);
+            return response()->json(['messagem' => 'Comentario não encontrado'], Response::HTTP_NO_CONTENT);
         }
-        return response()->json($comment, 200);
+        return response()->json(['data' => $comment], Response::HTTP_OK);
     }
 
     /**
@@ -66,13 +67,13 @@ class CommentController extends Controller
     public function update(Request $request, Comment $comment)
     {
         $request->validate([
-            'comment' => ['min:3']
+            'comment' => ['max:100']
         ]);
 
         $comment->comment = $request->comment;
         $comment->save();
 
-        return response()->json($comment, 200);
+        return response()->json(['data' => $comment], Response::HTTP_OK);
     }
 
     /**
@@ -84,10 +85,10 @@ class CommentController extends Controller
     public function destroy($id)
     {   
         $comment = Comment::find($id);
-        if ($comment === null) {
-            return response()->json(['Erro' => 'Impossível deletar, comentário não encontrado'], 404);
+        if (!$comment) {
+            return response()->json(['Erro' => 'Impossível deletar, comentário não encontrado'], Response::HTTP_NO_CONTENT);
         }
-        $comment->answers()->delete();
+        $comment->answers()->delete();  
         $comment->delete();
         return response()->json(['messagem' => 'Comentário deletado com sucesso']);
     }
