@@ -70,12 +70,11 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        try {
-            $user = User::findOrFail($id);
-            return response()->json(['data' => $user], Response::HTTP_OK);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['message' => 'Usuário não encontrado'], Response::HTTP_NOT_FOUND);
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['messagem' => 'Usuário não encontrado'], Response::HTTP_NO_CONTENT);
         }
+        return response()->json(['data' => $user], Response::HTTP_OK);
     }
 
     /**
@@ -116,7 +115,7 @@ class UserController extends Controller
             'is_admin' => $request->is_admin ?: $user->is_admin
         ]);
 
-        return response()->json($user);
+        return response()->json(['data' => $user],Response::HTTP_OK);
     }
 
     /**
@@ -128,8 +127,8 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::find($id);
-        if ($user === null) {
-            return response()->json(['messagem' => 'Impossível deletar, usuário não encontrado'], 404);
+        if (!$user) {
+            return response()->json(['messagem' => 'Impossível deletar, usuário não encontrado'], Response::HTTP_NO_CONTENT);
         }
         if ($user->image) {
             Storage::disk('public')->delete($user->image);
