@@ -86,16 +86,17 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['messagem' => 'Impossível realizar atualização, usuário não encontrado'], Response::HTTP_NO_CONTENT);
+        }
+
         $request->validate([
             'username' => ['string', 'max:25', Rule::unique('users')->ignore($user->id)],
             'image' => ['file', 'image'],
             'email' => ['string', 'email', 'max:90', Rule::unique('users')->ignore($user->id)],
             'is_admin' => ['in:admin,normal']
         ]);
-
-        if (!$user) {
-            return response()->json(['messagem' => 'Impossível realizar atualização, usuário não encontrado'], Response::HTTP_NO_CONTENT);
-        }
 
         if ($request->hasFile('image')) {
             if ($user->image) {
@@ -114,7 +115,7 @@ class UserController extends Controller
             'is_admin' => $request->is_admin ?: $user->is_admin
         ]);
 
-        return response()->json(['data' => $user],Response::HTTP_OK);
+        return response()->json(['data' => $user], Response::HTTP_OK);
     }
 
     /**
@@ -129,12 +130,26 @@ class UserController extends Controller
         if (!$user) {
             return response()->json(['messagem' => 'Impossível deletar, usuário não encontrado'], Response::HTTP_NO_CONTENT);
         }
+
+        foreach ($user->posts as $post) {
+            foreach ($post->paragraphs as $paragraph) {
+                foreach ($paragraph->photos as $photo) {
+                    Storage::disk('public')->delete($photo->photo);
+                    $photo->delete();
+                }
+                $paragraph->delete();
+            }
+            if ($post->image) {
+                Storage::disk('public')->delete($post->image);
+            }
+            $post->delete();
+        }
         if ($user->image) {
             Storage::disk('public')->delete($user->image);
         }
+
         $user->comments()->delete();
         $user->answers()->delete();
-        $user->posts()->delete();
         $deleted = $user->delete();
 
         if ($deleted) {

@@ -32,7 +32,7 @@ class CommentController extends Controller
             'post_id' => ['exists:posts,id'],
             'comment' => ['max:100']
         ]);
-        
+
         $comment = Comment::create([
             'user_id' => $request->user_id,
             'post_id' => $request->post_id,
@@ -64,11 +64,17 @@ class CommentController extends Controller
      * @param  \App\Models\Comment  $comment
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Comment $comment)
+    public function update(Request $request,$id)
     {
         $request->validate([
             'comment' => ['max:100']
         ]);
+
+        $comment = Comment::find($id);
+        
+        if (!$comment) {
+            return response()->json(['messagem' => 'Comentário não encontrado'], Response::HTTP_NO_CONTENT);
+        }
 
         $comment->comment = $request->comment;
         $comment->save();
@@ -83,12 +89,12 @@ class CommentController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
-    {   
+    {
         $comment = Comment::find($id);
         if (!$comment) {
             return response()->json(['Erro' => 'Impossível deletar, comentário não encontrado'], Response::HTTP_NO_CONTENT);
         }
-        $comment->answers()->delete();  
+        $comment->answers()->delete();
         $comment->delete();
         return response()->json(['messagem' => 'Comentário deletado com sucesso']);
     }

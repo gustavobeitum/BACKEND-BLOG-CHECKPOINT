@@ -64,7 +64,7 @@ class ParagraphController extends Controller
      */
     public function show($id)
     {
-        $paragraph = Paragraph::with('photos:paragraph_id,photo')->find($id);
+        $paragraph = Paragraph::with('photos')->find($id);
         if (!$paragraph) {
             return response()->json(['messagem' => 'Parágrafo não encontrado'], Response::HTTP_NO_CONTENT);
         }

@@ -17,7 +17,7 @@ class PostController extends Controller
     public function index()
     {
         $posts = Post::all();
-        return response()->json(['date' => $posts],Response::HTTP_OK);
+        return response()->json(['date' => $posts], Response::HTTP_OK);
     }
 
     /**
@@ -124,7 +124,17 @@ class PostController extends Controller
         if ($post->image) {
             Storage::disk('public')->delete($post->image);
         }
+
+        foreach ($post->paragraphs as $paragraph) {
+            foreach ($paragraph->photos as $photo) {
+                Storage::disk('public')->delete($photo->photo);
+                $photo->delete();
+            }
+            $paragraph->delete();
+        }
+
         $post->delete();
+        
         return response()->json(['messagem' => 'Postagem deletada com sucesso'], Response::HTTP_OK);
     }
 }

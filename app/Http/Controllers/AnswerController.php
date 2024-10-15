@@ -65,11 +65,12 @@ class AnswerController extends Controller
      * @param  \App\Models\Answer  $answer
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Answer $answer)
+    public function update(Request $request, $id)
     {
         $request->validate([
             'response' => ['max:100'],
         ]);
+        $answer = Answer::find($id);
         if (!$answer) {
             return response()->json(['Erro' => 'Impossível realizar a atualização, postagem não encontrada'], Response::HTTP_NO_CONTENT);
         }
