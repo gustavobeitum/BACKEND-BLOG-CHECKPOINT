@@ -20,4 +20,8 @@ class Post extends Model
     public function comments(){
         return $this->hasMany(Comment::class)->with('answers');
     }
+    public function savedByUser(){
+        return $this->belongsToMany(User::class,'saved_posts')
+        ->withTimestamps();
+    }
 }
