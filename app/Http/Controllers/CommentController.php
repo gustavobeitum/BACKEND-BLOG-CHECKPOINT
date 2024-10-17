@@ -64,22 +64,25 @@ class CommentController extends Controller
      * @param  \App\Models\Comment  $comment
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request,$id)
+    public function update(Request $request, $id)
     {
         $request->validate([
             'comment' => ['max:100']
         ]);
 
         $comment = Comment::find($id);
-        
+
         if (!$comment) {
             return response()->json(['messagem' => 'Comentário não encontrado'], Response::HTTP_NO_CONTENT);
         }
 
-        $comment->comment = $request->comment;
-        $comment->save();
+        if ($request->user()->id == $comment->user_id) {
+            $comment->comment = $request->comment;
+            $comment->save();
 
-        return response()->json(['data' => $comment], Response::HTTP_OK);
+            return response()->json(['data' => $comment], Response::HTTP_OK);
+        }
+        return response()->json(['messagem' => 'Você não possui permissão para editar este comentário'], Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -88,14 +91,17 @@ class CommentController extends Controller
      * @param  \App\Models\Comment  $comment
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $comment = Comment::find($id);
         if (!$comment) {
             return response()->json(['Erro' => 'Impossível deletar, comentário não encontrado'], Response::HTTP_NO_CONTENT);
         }
-        $comment->answers()->delete();
-        $comment->delete();
-        return response()->json(['messagem' => 'Comentário deletado com sucesso']);
+        if ($request->user()->id == $comment->user_id || $request->user()->is_admin == 'admin') {
+            $comment->answers()->delete();
+            $comment->delete();
+            return response()->json(['messagem' => 'Comentário deletado com sucesso']);
+        }
+        return response()->json(['messagem' => 'Você não possui permissão para deletar este comentário'], Response::HTTP_NO_CONTENT);
     }
 }

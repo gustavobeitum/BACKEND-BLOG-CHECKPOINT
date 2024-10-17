@@ -39,7 +39,7 @@ class AnswerController extends Controller
             'response' => $request->response,
         ]);
 
-        return response()->json(['data' => $answer],Response::HTTP_CREATED);
+        return response()->json(['data' => $answer], Response::HTTP_CREATED);
     }
 
     /**
@@ -51,9 +51,9 @@ class AnswerController extends Controller
     public function show($id)
     {
         $answer = Answer::find($id);
-            if (!$answer){
-                return response()->json(['messagem' => 'Resposta não encontrada'], Response::HTTP_NO_CONTENT);
-            }
+        if (!$answer) {
+            return response()->json(['messagem' => 'Resposta não encontrada'], Response::HTTP_NO_CONTENT);
+        }
 
         return response()->json(['data' => $answer], Response::HTTP_OK);
     }
@@ -75,10 +75,13 @@ class AnswerController extends Controller
             return response()->json(['Erro' => 'Impossível realizar a atualização, postagem não encontrada'], Response::HTTP_NO_CONTENT);
         }
 
-        $answer->response = $request->response;
-        $answer->save();
+        if ($request->user()->id == $answer->user_id) {
+            $answer->response = $request->response;
+            $answer->save();
 
-        return response()->json(['data' => $answer], Response::HTTP_OK);
+            return response()->json(['data' => $answer], Response::HTTP_OK);
+        }
+        return response()->json(['mensagem' => 'Você não possui permissão para alterar essa resposta'], Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -87,14 +90,18 @@ class AnswerController extends Controller
      * @param  \App\Models\Answer  $answer
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $answer = Answer::find($id);
-        if(!$answer){
+        if (!$answer) {
             return response()->json(['messagem' => 'Resposta não encontrada'], Response::HTTP_NO_CONTENT);
         }
-        $answer->delete();
 
-        return response()->json(['messagem' => 'Resposta excluída com sucesso']);
+        if ($request->user()->id == $answer->user_id || $request->user()->is_admin == 'admin') {
+            $answer->delete();
+
+            return response()->json(['messagem' => 'Resposta excluída com sucesso']);
+        }
+        return response()->json(['messagem' => 'Você não possui permissão para deletar este comentário'], Response::HTTP_NO_CONTENT);
     }
 }
