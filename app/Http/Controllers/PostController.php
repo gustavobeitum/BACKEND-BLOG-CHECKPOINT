@@ -16,8 +16,11 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::all();
-        return response()->json(['date' => $posts], Response::HTTP_OK);
+        $posts = Post::with('user')->get();
+        if (!$posts) {
+            return response()->json(['mensagem' => 'Não há postagens'], Response::HTTP_NO_CONTENT);
+        }
+        return response()->json(['data' => $posts], Response::HTTP_OK);
     }
 
     /**
@@ -44,7 +47,7 @@ class PostController extends Controller
         }
 
         $post = Post::create([
-            'user_id' => $request->user_id,
+            'user_id' => $request->user()->id,
             'title' => $request->title,
             'type' => $request->type,
             'image' => $images_url,
@@ -62,7 +65,7 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        $post = Post::with('comments.answers')->find($id);
+        $post = Post::with('user', 'comments.answers')->find($id);
         if (!$post) {
             return response()->json(['messagem' => 'Postagem não encontrada'], Response::HTTP_NO_CONTENT);
         }
@@ -80,7 +83,6 @@ class PostController extends Controller
     {
         $post = Post::find($id);
         $request->validate([
-            'user_id' => ['exists:users,id'],
             'image' => ['file', 'image']
         ]);
 
@@ -96,17 +98,18 @@ class PostController extends Controller
         } else {
             $image_url = $post->image;
         }
+        if ($request->user()->id == $post->user_id) {
+            $post->update([
+                'title' => $request->title ?: $post->title,
+                'type' => $request->type ?: $post->type,
+                'image' => $image_url,
+                'description' => $request->description ?: $post->description
+            ]);
+            $post->save();
 
-        $post->update([
-            'user_id' => $request->user_id ?: $post->user_id,
-            'title' => $request->title ?: $post->title,
-            'type' => $request->type ?: $post->type,
-            'image' => $image_url,
-            'description' => $request->description ?: $post->description
-        ]);
-        $post->save();
-
-        return response()->json(['data' => $post], Response::HTTP_OK);
+            return response()->json(['data' => $post], Response::HTTP_OK);
+        }
+        return response()->json(['mensagem' => 'Você não tem permissão para realizar esta ação'], Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -115,26 +118,29 @@ class PostController extends Controller
      * @param  \App\Models\Post  $post
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $post = Post::with('comments.answers')->find($id);
         if (!$post) {
             return response()->json(['Erro' => 'Impossível deletar, postagem não encontrada'], Response::HTTP_NO_CONTENT);
         }
-        if ($post->image) {
-            Storage::disk('public')->delete($post->image);
-        }
-
-        foreach ($post->paragraphs as $paragraph) {
-            foreach ($paragraph->photos as $photo) {
-                Storage::disk('public')->delete($photo->photo);
-                $photo->delete();
+        if ($post->user_id == $request->user()->id) {
+            if ($post->image) {
+                Storage::disk('public')->delete($post->image);
             }
-            $paragraph->delete();
-        }
 
-        $post->delete();
-        
-        return response()->json(['messagem' => 'Postagem deletada com sucesso'], Response::HTTP_OK);
+            foreach ($post->paragraphs as $paragraph) {
+                foreach ($paragraph->photos as $photo) {
+                    Storage::disk('public')->delete($photo->photo);
+                    $photo->delete();
+                }
+                $paragraph->delete();
+            }
+
+            $post->delete();
+
+            return response()->json(['messagem' => 'Postagem deletada com sucesso'], Response::HTTP_OK);
+        }
+        return response()->json(['Erro' => 'Você não tem permissão para realizar esta ação'], Response::HTTP_NO_CONTENT);
     }
 }
