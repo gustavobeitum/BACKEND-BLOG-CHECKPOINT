@@ -15,7 +15,7 @@ class CommentController extends Controller
      */
     public function index()
     {
-        $comments = Comment::all();
+        $comments = Comment::paginate(2);
         return response()->json(['data' => $comments], Response::HTTP_OK);
     }
 
@@ -34,7 +34,7 @@ class CommentController extends Controller
         ]);
 
         $comment = Comment::create([
-            'user_id' => $request->user_id,
+            'user_id' => $request->user()->id,
             'post_id' => $request->post_id,
             'comment' => $request->comment
         ]);

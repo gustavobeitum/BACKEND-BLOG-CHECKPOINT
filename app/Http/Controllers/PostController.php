@@ -16,7 +16,7 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::with('user')->get();
+        $posts = Post::with('user:id,name,last_name,username')->select('id','user_id','title','type','image','description','created_at')->paginate(6);
         if (!$posts) {
             return response()->json(['mensagem' => 'Não há postagens'], Response::HTTP_NO_CONTENT);
         }
@@ -65,7 +65,7 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        $post = Post::with('user', 'comments.answers')->find($id);
+        $post = Post::with('user:id,name,last_name,username','paragraphs:id,post_id,subtitle,content','paragraphs.photos:id,paragraph_id,photo' ,'comments.answers')->select('id','user_id','title','type','image','description','created_at')->find($id);
         if (!$post) {
             return response()->json(['messagem' => 'Postagem não encontrada'], Response::HTTP_NO_CONTENT);
         }

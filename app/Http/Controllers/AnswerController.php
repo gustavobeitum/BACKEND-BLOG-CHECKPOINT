@@ -34,7 +34,7 @@ class AnswerController extends Controller
             'response' => ['max:100'],
         ]);
         $answer = Answer::create([
-            'user_id' => $request->user_id,
+            'user_id' => $request->user()->id,
             'comment_id' => $request->comment_id,
             'response' => $request->response,
         ]);
