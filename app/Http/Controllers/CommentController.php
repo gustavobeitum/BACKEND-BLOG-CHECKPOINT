@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class CommentController extends Controller
@@ -98,6 +99,8 @@ class CommentController extends Controller
             return response()->json(['Erro' => 'Impossível deletar, comentário não encontrado'], Response::HTTP_NO_CONTENT);
         }
         if ($request->user()->id == $comment->user_id || $request->user()->is_admin == 'admin') {
+            DB::table('notifications')->where('data->comment_id', $comment->id)->delete();
+
             $comment->answers()->delete();
             $comment->delete();
             return response()->json(['messagem' => 'Comentário deletado com sucesso']);

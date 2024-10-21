@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Answer;
+use App\Models\Comment;
+use App\Notifications\ForUsersNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class AnswerController extends Controller
@@ -38,6 +41,10 @@ class AnswerController extends Controller
             'comment_id' => $request->comment_id,
             'response' => $request->response,
         ]);
+
+        $comment = Comment::findOrFail($request->comment_id);
+
+        $comment->user->notify(new ForUsersNotification($answer, $comment));
 
         return response()->json(['data' => $answer], Response::HTTP_CREATED);
     }
@@ -98,6 +105,8 @@ class AnswerController extends Controller
         }
 
         if ($request->user()->id == $answer->user_id || $request->user()->is_admin == 'admin') {
+            DB::table('notifications')->where('data->answer_id', $answer->id)->delete();
+
             $answer->delete();
 
             return response()->json(['messagem' => 'Resposta excluída com sucesso']);
