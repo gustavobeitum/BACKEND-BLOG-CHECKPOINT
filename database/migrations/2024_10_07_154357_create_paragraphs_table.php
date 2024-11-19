@@ -17,7 +17,7 @@ class CreateParagraphsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('post_id');
             $table->string('subtitle', 100)->nullable();
-            $table->string('content', 255)->nullable();
+            $table->string('content', 2000)->nullable();
             $table->timestamps();
 
             //foreign key constraint
