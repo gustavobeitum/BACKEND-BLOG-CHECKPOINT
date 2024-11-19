@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 class PostController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource. aol
      *
      * @return \Illuminate\Http\Response
      */
