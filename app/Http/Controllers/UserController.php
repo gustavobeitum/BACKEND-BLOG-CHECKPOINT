@@ -33,11 +33,11 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:40'],
             'last_name' => ['required', 'string', 'max:30'],
             'username' => ['required', 'string', 'max:25', 'unique:users'],
-            'image' => ['required', 'file', 'image'],
+            'image' => ['file', 'image'],
             'birthday' => ['required', 'date'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'is_admin' => ['required', 'in:admin,normal']
+            'is_admin' => ['in:admin,normal']
         ]);
 
         if ($request->hasFile('image')) {
@@ -55,7 +55,7 @@ class UserController extends Controller
             'birthday' => $request->birthday,
             'email' => $request->email,
             'password' => bcrypt($request->password),
-            'is_admin' => $request->is_admin,
+            'is_admin' => $request->is_admin?: 'normal'
         ]);
 
         return response()->json(['data' => $user], Response::HTTP_CREATED);
