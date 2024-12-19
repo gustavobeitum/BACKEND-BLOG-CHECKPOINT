@@ -18,7 +18,7 @@ class CreateUsersTable extends Migration
             $table->string('name', 40);
             $table->string('last_name', 30);
             $table->string('username',50)->unique();
-            $table->string('image');
+            $table->string('image')->nullable();
             $table->date('birthday');
             $table->enum('is_admin', ['normal', 'admin'])->default('normal');
             $table->string('email')->unique();
