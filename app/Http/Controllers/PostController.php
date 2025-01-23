@@ -50,7 +50,7 @@ class PostController extends Controller
             'user_id' => $request->user()->id,
             'title' => $request->title,
             'type' => $request->type,
-            'image' => $images_url,
+            'image' => "storage/".$images_url,
             'description' => $request->description
         ]);
 
