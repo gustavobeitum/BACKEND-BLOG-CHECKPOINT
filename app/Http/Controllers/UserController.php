@@ -42,7 +42,7 @@ class UserController extends Controller
 
         if ($request->hasFile('image')) {
             $images = $request->file('image');
-            $images_url = $images->store('images', 'public');
+            $images_url = "storage/".$images->store('images', 'public');
         } else {
             $images_url = null;
         }
@@ -100,10 +100,11 @@ class UserController extends Controller
 
         if ($request->hasFile('image')) {
             if ($user->image) {
-                Storage::disk('public')->delete($user->image);
+                $imagePath = str_replace('storage/', '', $user->image);
+                Storage::disk('public')->delete($imagePath);
             }
             $image = $request->file('image');
-            $image_url = $image->store('images', 'public');
+            $image_url = "storage/".$image->store('images', 'public');
         } else {
             $image_url = $user->image;
         }
@@ -140,12 +141,14 @@ class UserController extends Controller
                 $paragraph->delete();
             }
             if ($post->image) {
-                Storage::disk('public')->delete($post->image);
+                $imagePath = str_replace('storage/', '', $post->image);
+                Storage::disk('public')->delete($imagePath);
             }
             $post->delete();
         }
         if ($user->image) {
-            Storage::disk('public')->delete($user->image);
+            $imagePath = str_replace('storage/', '', $user->image);
+            Storage::disk('public')->delete($imagePath);
         }
 
         $user->comments()->delete();

@@ -39,9 +39,10 @@ class ParagraphController extends Controller
             'photo' => ['array'],
             'photo.*' => ['file', 'image']
         ]);
+        $post_id = (int)$request->post_id;
 
         $paragraph = Paragraph::create([
-            'post_id' => $request->post_id,
+            'post_id' => $post_id,
             'subtitle' => $request->subtitle,
             'content' => $request->text
         ]);
@@ -49,7 +50,7 @@ class ParagraphController extends Controller
 
         if ($request->hasFile('photo')) {
             foreach ($request->file('photo') as $photo) {
-                $image_url = $photo->store('photos', 'public');
+                $image_url = "storage/".$photo->store('photos', 'public');
                 Photo::create([
                     'paragraph_id' => $paragraph->id,
                     'photo' => $image_url
@@ -107,11 +108,12 @@ class ParagraphController extends Controller
 
             if ($request->hasFile('photo')) {
                 foreach ($paragraph->photos as $photo) {
-                    Storage::disk('public')->delete($photo->photo);
+                    $imagePath = str_replace('storage/', '', $photo->photo);
+                    Storage::disk('public')->delete($imagePath);
                     $photo->delete();
                 }
                 foreach ($request->file('photo') as $newPhoto) {
-                    $image_url = $newPhoto->store('photos', 'public');
+                    $image_url = "storage/".$newPhoto->store('photos', 'public');
 
                     Photo::create([
                         'paragraph_id' => $paragraph->id,
@@ -141,7 +143,8 @@ class ParagraphController extends Controller
 
         if ($post->user_id == $request->user()->id) {
             foreach ($paragraph->photos as $photo) {
-                Storage::disk('public')->delete($photo->photo);
+                $imagePath = str_replace('storage/', '', $photo->photo);
+                Storage::disk('public')->delete($imagePath);
                 $photo->delete();
             }
 

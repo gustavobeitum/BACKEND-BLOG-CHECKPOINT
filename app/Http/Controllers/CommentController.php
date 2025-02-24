@@ -33,10 +33,10 @@ class CommentController extends Controller
             'post_id' => ['exists:posts,id'],
             'comment' => ['max:100']
         ]);
-
+        $post_id = (int)$request->post_id;
         $comment = Comment::create([
             'user_id' => $request->user()->id,
-            'post_id' => $request->post_id,
+            'post_id' => $post_id,
             'comment' => $request->comment
         ]);
 

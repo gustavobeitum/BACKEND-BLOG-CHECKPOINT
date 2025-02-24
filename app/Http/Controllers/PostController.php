@@ -91,10 +91,11 @@ class PostController extends Controller
         }
         if ($request->hasFile('image')) {
             if ($post->image) {
-                Storage::disk('public')->delete($post->image);
+                $imagePath = str_replace('storage/', '', $post->image);
+                Storage::disk('public')->delete($imagePath);
             }
             $image = $request->file('image');
-            $image_url = $image->store('post/images', 'public');
+            $image_url = "storage/".$image->store('post/images', 'public');
         } else {
             $image_url = $post->image;
         }
@@ -126,16 +127,19 @@ class PostController extends Controller
         }
         if ($post->user_id == $request->user()->id) {
             if ($post->image) {
-                Storage::disk('public')->delete($post->image);
+                $imagePath = str_replace('storage/', '', $post->image);
+                Storage::disk('public')->delete($imagePath);
             }
 
             foreach ($post->paragraphs as $paragraph) {
                 foreach ($paragraph->photos as $photo) {
-                    Storage::disk('public')->delete($photo->photo);
+                    $photoPath = str_replace('storage/', '', $photo->photo);
+                    Storage::disk('public')->delete($photoPath);
                     $photo->delete();
                 }
                 $paragraph->delete();
             }
+
 
             $post->delete();
 

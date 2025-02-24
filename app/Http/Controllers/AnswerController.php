@@ -36,9 +36,10 @@ class AnswerController extends Controller
             'comment_id' => ['exists:comments,id', 'integer'],
             'response' => ['max:100'],
         ]);
+        $comment_id = (int)$request->comment_id;
         $answer = Answer::create([
             'user_id' => $request->user()->id,
-            'comment_id' => $request->comment_id,
+            'comment_id' => $comment_id,
             'response' => $request->response,
         ]);
 
